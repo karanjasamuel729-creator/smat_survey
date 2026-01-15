@@ -1,12 +1,10 @@
-const CACHE_NAME = 'survey-v2';
+const CACHE_NAME = 'survey-v1';
 const ASSETS = [
-  './',
-  './index.html',
-  './style.css',
-  './script.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  '/smat_survey/',
+  '/smat_survey/index.html',
+  '/smat_survey/style.css',
+  '/smat_survey/script.js',
+  '/smat_survey/manifest.json'
 ];
 
 // 1. Install Event: Save all files to the device
@@ -26,4 +24,5 @@ self.addEventListener('fetch', (event) => {
       return cachedResponse || fetch(event.request);
     })
   );
+
 });
