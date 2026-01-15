@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART SURVEY</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <header>
+            <div class="title-bar">
+                <span class="icon"></span>
+                <h2>Advanced Survey Computation Software</h2>
+            </div>
+            
+            <div class="file-menu">
+                <div class="project-name">
+                    <label for="projectName">Project Name:</label>
+                    <input type="text" id="projectName" value="Untitled Project" class="auto-save">
+                </div>
+                
+                <button id="newProject" class="file-button clear-button">New Project</button>
+                <button id="installBtn" style="display:none;" class="btn-install">
+       📥 Install Desktop App
+    </button>
+                <label for="importProjectInput" class="file-button">Import Project (Open)</label>
+                <input type="file" id="importProjectInput" accept=".json">
+                <button id="exportProject" class="file-button">Export Project (Save As)</button>
+            </div>
+
+            <nav class="tabs">
+                <a href="#" class="tab-link active" data-tab="leveling">Leveling</a>
+                <a href="#" class="tab-link" data-tab="traverse">Traverse</a>
+                <a href="#" class="tab-link" data-tab="radiation">Radiation</a>
+                <a href="#" class="tab-link" data-tab="unit-conversion">Unit Conversion</a>
+                <a href="#" class="tab-link" data-tab="pol-rec">Pol / Rec</a>
+                <a href="#" class="tab-link" data-tab="area-calc">Area Calc</a>
+                <a href="#" class="tab-link" data-tab="coord-math">Coord Math</a>
+            </nav>
+        </header>
+
+        <main>
+            <div id="leveling" class="tab-content active show-rf">
+                
+                <section class="module">
+                    <div class="input-group">
+                        <label for="startRL">Starting RL (Benchmark):</label>
+                        <input type="number" id="startRL" value="100.000" step="0.001" class="auto-save">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="levelMethodSelect">Leveling Method:</label>
+                        <select id="levelMethodSelect" class="auto-save">
+                            <option value="rf" selected>Rise & Fall Method</option>
+                            <option value="hoc">Height of Collimation Method</option>
+                        </select>
+                    </div>
+
+                    <table id="levelBook" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>BS</th>
+                                <th>IS</th>
+                                <th>FS</th>
+                                <th>Remarks</th>
+                                <th>Del?</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="add-row-container">
+                        <input type="number" id="levelRowNum" class="row-num-input" value="1" min="1" max="100">
+                        <button id="addRow" class="add-button">Add Rows</button>
+                    </div>
+                    <button id="calculateLeveling" class="calc-button">Calculate Leveling</button>
+                    <button id="clearLevelData" class="clear-button">Clear Level Data</button> 
+                    
+                    <div class="error-check">
+                        <label for="closeRL">Known Closing RL:</label>
+                        <input type="number" id="closeRL" placeholder="e.g., 99.850" step="0.001" class="auto-save">
+                        <label for="levelDist">Total Distance (K in km):</label>
+                        <input type="number" id="levelDist" placeholder="e.g., 1.5" step="0.1" class="auto-save">
+                        <label for="levelConst">Allowable Constant (C in mm):</label>
+                        <input type="number" id="levelConst" value="12" placeholder="e.g., 12" step="1" class="auto-save">
+                    </div>
+
+                    <h3>Leveling Results</h3>
+                    
+                    <table id="levelResults" class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Station</th>
+                                <th>BS</th>
+                                <th>IS</th>
+                                <th>FS</th>
+                                <th class="col-rise-fall">Rise</th>
+                                <th class="col-rise-fall">Fall</th>
+                                <th>RL</th>
+                                <th class="col-hoc">HOC</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                    <button id="exportLevelCsv" class="export-button">Export Results to CSV</button>
+                    <button id="exportLevelPdf" class="export-button pdf-button">Export Results to PDF</button> <div id="levelChecks" class="results-summary"></div>
+                </section>
+            </div>
+
+            <div id="traverse" class="tab-content show-traverse-loop">
+                
+                <section class="module">
+                    <div class="input-group">
+                        <label for="startNorth">Start Northing:</label>
+                        <input type="number" id="startNorth" value="1000.000" step="0.001" class="auto-save">
+                        <label for="startEast">Start Easting:</label>
+                        <input type="number" id="startEast" value="1000.000" step="0.001" class="auto-save">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="traverseMethodSelect">Traverse Method:</label>
+                        <select id="traverseMethodSelect" class="auto-save">
+                            <option value="loop" selected>Closed Loop</option>
+                            <option value="link">Closed Link</option>
+                            <option value="open">Open</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group traverse-adjustment-inputs">
+                        <label for="adjustmentMethodSelect">Adjustment Method:</label>
+                        <select id="adjustmentMethodSelect" class="auto-save">
+                            <option value="bowditch" selected>Bowditch (Compass) Rule</option>
+                            <option value="transit">Transit Rule</option>
+                        </select>
+                    </div>
+
+                    <div class="traverse-link-inputs">
+                        <h4>Closing Control (for Closed Link)</h4>
+                        <div class="input-group">
+                            <label for="closeNorth">Closing Northing:</label>
+                            <input type="number" id="closeNorth" step="0.001" class="auto-save" placeholder="e.g., 1200.500">
+                            <label for="closeEast">Closing Easting:</label>
+                            <input type="number" id="closeEast" step="0.001" class="auto-save" placeholder="e.g., 950.200">
+                        </div>
+                    </div>
+
+
+                    <table id="traverseBook" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Azimuth (DMS)</th> <th>Distance (m)</th>
+                                <th>Del?</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="add-row-container">
+                        <input type="number" id="traverseRowNum" class="row-num-input" value="1" min="1" max="100">
+                        <button id="addTraverseRow" class="add-button">Add Rows</button>
+                    </div>
+                    
+                    <button id="calculateTraverse" class="calc-button">Calculate Traverse</button>
+                    <button id="clearTraverseData" class="clear-button">Clear Traverse Data</button>
+
+                    <div class="error-check traverse-loop-inputs">
+                        <label for="allowablePrecision">Allowable Precision (1 in...):</label>
+                        <input type="number" id="allowablePrecision" value="5000" placeholder="e.g., 5000" class="auto-save">
+                    </div>
+
+                    <h3>Traverse Results</h3>
+                    <div id="traverseResults" class="results-summary">
+                        </div>
+                </section>
+            </div>
+
+            <div id="radiation" class="tab-content">
+                <section class="module">
+                    <h2>Radiation (Sideshots)</h2>
+                    <p>Calculate coordinates from a setup point and backsight.</p>
+                    
+                    <h4>Setup Point (Occupy)</h4>
+                    <div class="input-group">
+                        <label for="radSetupN">Setup Northing:</label>
+                        <input type="number" id="radSetupN" step="0.001" class="auto-save" placeholder="e.g., 1000.000">
+                        <label for="radSetupE">Setup Easting:</label>
+                        <input type="number" id="radSetupE" step="0.001" class="auto-save" placeholder="e.g., 1000.000">
+                    </div>
+
+                    <h4>Backsight Point (Reference)</h4>
+                    <div class="input-group">
+                        <label for="radBsN">Backsight Northing:</label>
+                        <input type="number" id="radBsN" step="0.001" class="auto-save" placeholder="e.g., 1100.000">
+                        <label for="radBsE">Backsight Easting:</label>
+                        <input type="number" id="radBsE" step="0.001" class="auto-save" placeholder="e.g., 1000.000">
+                    </div>
+                    
+                    <hr>
+
+                    <h4>Observations</h4>
+                    <table id="radiationBook" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Target Pt #</th>
+                                <th>Angle (DMS)</th>
+                                <th>Distance (m)</th>
+                                <th>Del?</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="add-row-container">
+                        <input type="number" id="radiationRowNum" class="row-num-input" value="1" min="1" max="100">
+                        <button id="addRadiationRow" class="add-button">Add Rows</button>
+                    </div>
+                    <button id="calculateRadiation" class="calc-button">Calculate Sideshots</button>
+                    <button id="clearRadiationData" class="clear-button">Clear Radiation Data</button>
+
+                    <h3>Radiation Results</h3>
+                    <table id="radiationResults" class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Target Pt #</th>
+                                <th>Northing</th>
+                                <th>Easting</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                    <button id="exportRadiationCsv" class="export-button">Export Results to CSV</button>
+                </section>
+            </div>
+            <div id="unit-conversion" class="tab-content">
+                <div class="converter-container">
+                    <section class="module">
+                        <h2>Length Conversion</h2>
+                        <div class="input-group vertical">
+                            <label for="lengthInput">Value:</label>
+                            <input type="number" id="lengthInput" value="100">
+                            
+                            <label for="lengthFrom">From Unit:</label>
+                            <select id="lengthFrom">
+                                <option value="m" selected>Meters (m)</option>
+                                <option value="mm">Millimeters (mm)</option>
+                                <option value="cm">Centimeters (cm)</option>
+                                <option value="km">Kilometers (km)</option>
+                                <option value="ft">Feet (ft)</option>
+                                <option value="in">Inches (in)</option>
+                                <option value="yd">Yards (yd)</option>
+                                <option value="mi">Miles (mi)</option>
+                                <option value="lk">Gunter's Links (lk)</option>
+                            </select>
+                            
+                            <label for="lengthTo">To Unit:</label>
+                            <select id="lengthTo">
+                                 <option value="m">Meters (m)</option>
+                                <option value="mm">Millimeters (mm)</option>
+                                <option value="cm">Centimeters (cm)</option>
+                                <option value="km">Kilometers (km)</option>
+                                <option value="ft" selected>Feet (ft)</option>
+                                <option value="in">Inches (in)</option>
+                                <option value="yd">Yards (yd)</option>
+                                <option value="mi">Miles (mi)</option>
+                                <option value="lk">Gunter's Links (lk)</option>
+                            </select>
+                        </div>
+                        <button id="convertLength" class="calc-button">Convert Length</button>
+                        <div id="lengthResult" class="results-summary"></div>
+                    </section>
+                    
+                    <section class="module">
+                        <h2>Angle Conversion</h2>
+                        
+                        <div class="input-group vertical">
+                            <label>DMS to Decimal:</label>
+                            <div class="dms-input-group" id="dmsInputGroup">
+                                <input type="number" class="dms-deg" placeholder="000" min="0" max="359">
+                                <span class="dms-symbol">°</span>
+                                <input type="number" class="dms-min" placeholder="00" min="0" max="59">
+                                <span class="dms-symbol">'</span>
+                                <input type="number" class="dms-sec" placeholder="00" min="0" max="59">
+                                <span class="dms-symbol">"</span>
+                            </div>
+                        </div>
+                        <button id="convertDms" class="calc-button">Convert to DD</button>
+                        <div id="dmsResult" class="results-summary"></div>
+                        
+                        <hr class="light">
+                        
+                        <div class="input-group vertical">
+                            <label for="angleDdInput">Decimal to DMS:</label>
+                            <input type="number" id="angleDdInput" value="45.5000" step="any">
+                        </div>
+                        <button id="convertDd" class="calc-button">Convert to DMS</button>
+                        <div id="ddResult" class="results-summary"></div>
+                    </section>
+
+                    <section class="module">
+                        <h2>Area Conversion</h2>
+                        <div class="input-group vertical">
+                            <label for="areaInput">Value:</label>
+                            <input type="number" id="areaInput" value="1">
+                            
+                            <label for="areaFrom">From Unit:</label>
+                            <select id="areaFrom">
+                                <option value="m2" selected>Square Meters (m²)</option>
+                                <option value="km2">Square Kilometers (km²)</option>
+                                <option value="ft2">Square Feet (ft²)</option>
+                                <option value="ac">Acres (ac)</option>
+                                <option value="ha">Hectares (ha)</option>
+                            </select>
+                            
+                            <label for="areaTo">To Unit:</label>
+                            <select id="areaTo">
+                                <option value="m2">Square Meters (m²)</option>
+                                <option value="km2">Square Kilometers (km²)</option>
+                                <option value="ft2" selected>Square Feet (ft²)</option>
+                                <option value="ac">Acres (ac)</option>
+                                <option value="ha">Hectares (ha)</option>
+                            </select>
+                        </div>
+                        <button id="convertArea" class="calc-button">Convert Area</button>
+                        <div id="areaResult" class="results-summary"></div>
+                    </section>
+                    
+                    <section class="module">
+                        <h2>Radian / Degree</h2>
+                        
+                        <div class="input-group vertical">
+                            <label for="radInput">Radians to Degrees:</label>
+                            <input type="number" id="radInput" value="1" step="any">
+                        </div>
+                        <button id="convertRadToDeg" class="calc-button">Convert Rad to Deg</button>
+                        <div id="radToDegResult" class="results-summary"></div>
+                        
+                        <hr class="light">
+                        
+                        <div class="input-group vertical">
+                            <label for="degInput">Degrees (Dec) to Radians:</label>
+                            <input type="number" id="degInput" value="45" step="any">
+                        </div>
+                        <button id="convertDegToRad" class="calc-button">Convert Deg to Rad</button>
+                        <div id="degToRadResult" class="results-summary"></div>
+                    </section>
+
+                </div>
+            </div>
+
+            <div id="pol-rec" class="tab-content">
+                <div class="pol-rec-container">
+                    
+                    <section class="module">
+                        <h2>Polar to Rectangular (Pol)</h2>
+                        <p>Calculates coordinates from an azimuth and distance.</p>
+                        <div class="input-group vertical">
+                            <label for="polStartN">Start Northing:</label>
+                            <input type="number" id="polStartN" value="1000.000" class="auto-save">
+                            <label for="polStartE">Start Easting:</label>
+                            <input type="number" id="polStartE" value="1000.000" class="auto-save">
+                            <label>Azimuth (DMS):</label>
+                            <div class="dms-input-group" id="polBearingGroup">
+                                <input type="number" class="dms-deg auto-save" placeholder="000" min="0" max="359">
+                                <span class="dms-symbol">°</span>
+                                <input type="number" class="dms-min auto-save" placeholder="00" min="0" max="59">
+                                <span class="dms-symbol">'</span>
+                                <input type="number" class="dms-sec auto-save" placeholder="00" min="0" max="59">
+                                <span class="dms-symbol">"</span>
+                            </div>
+                            <label for="polDist">Distance (m):</label>
+                            <input type="number" id="polDist" value="100.00" class="auto-save">
+                        </div>
+                        <button id="calculatePol" class="calc-button">Calculate Coords</button>
+                        <div id="polResult" class="results-summary"></div>
+                    </section>
+                    
+                    <section class="module">
+                        <h2>Rectangular to Polar (Rec)</h2>
+                        <p>Calculates azimuth and distance from coordinates.</p>
+                        <div class="input-group vertical">
+                            <label for="recStartN">Start Northing:</label>
+                            <input type="number" id="recStartN" value="1000.000" class="auto-save">
+                            <label for="recStartE">Start Easting:</label>
+                            <input type="number" id="recStartE" value="1000.000" class="auto-save">
+                            <label for="recEndN">End Northing:</label>
+                            <input type="number" id="recEndN" value="1070.711" class="auto-save">
+                            <label for="recEndE">End Easting:</label>
+                            <input type="number" id="recEndE" value="1070.711" class="auto-save">
+                        </div>
+                        <button id="calculateRec" class="calc-button">Calculate Azimuth/Dist</button>
+                        <div id="recResult" class="results-summary"></div>
+                    </section>
+
+                </div>
+            </div>
+            
+            <div id="area-calc" class="tab-content">
+                <section class="module">
+                    <h2>Area Calculation (from Coordinates)</h2>
+                    <p>Enter coordinates in order. The first point will be automatically used to close the polygon.</p>
+                    <table id="areaBook" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Station</th>
+                                <th>Northing</th>
+                                <th>Easting</th>
+                                <th>Del?</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="add-row-container">
+                        <input type="number" id="areaRowNum" class="row-num-input" value="1" min="1" max="100">
+                        <button id="addAreaRow" class="add-button">Add Rows</button>
+                    </div>
+                    <button id="calculateArea" class="calc-button">Calculate Area</button>
+                    <button id="clearAreaData" class="clear-button">Clear Area Data</button>
+                    
+                    <div id="areaCalcResult" class="results-summary"></div>
+                </section>
+            </div>
+
+            <div id="coord-math" class="tab-content">
+                <div class="pol-rec-container"> <section class="module">
+                        <h2>Delta to Pol (Rec)</h2>
+                        <p>Calculates Azimuth and Distance from ΔN and ΔE.</p>
+                        <div class="input-group vertical">
+                            <label for="deltaN_in">Δ Northing:</label>
+                            <input type="number" id="deltaN_in" step="0.001" class="auto-save" value="70.711">
+                            <label for="deltaE_in">Δ Easting:</label>
+                            <input type="number" id="deltaE_in" step="0.001" class="auto-save" value="70.711">
+                        </div>
+                        <button id="calcDeltaToPol" class="calc-button">Calculate Azimuth/Dist</button>
+                        <div id="deltaToPolResult" class="results-summary"></div>
+                    </section>
+                    
+                    <section class="module">
+                        <h2>Pol to Delta (Pol)</h2>
+                        <p>Calculates ΔN and ΔE from Azimuth and Distance.</p>
+                        <div class="input-group vertical">
+                            <label>Azimuth (DMS):</label>
+                             <div class="dms-input-group" id="polAzimuthGroup">
+                                <input type="number" class="dms-deg auto-save" placeholder="000" min="0" max="359">
+                                <span class="dms-symbol">°</span>
+                                <input type="number" class="dms-min auto-save" placeholder="00" min="0" max="59">
+                                <span class="dms-symbol">'</span>
+                                <input type="number" class="dms-sec auto-save" placeholder="00" min="0" max="59">
+                                <span class="dms-symbol">"</span>
+                            </div>
+                            <label for="polDist_in">Distance (m):</label>
+                            <input type="number" id="polDist_in" step="0.001" class="auto-save" value="100.000">
+                        </div>
+                        <button id="calcPolToDelta" class="calc-button">Calculate ΔN / ΔE</button>
+                        <div id="polToDeltaResult" class="results-summary"></div>
+                    </section>
+
+                </div>
+            </div>
+            </main>
+
+    </div> <script>
+/* ==============================================
+   SECTION 1: HELPER FUNCTIONS (Tools)
+   ============================================== */
+console.log("app.js file loaded successfully. Version 11 - CSV Colspan & LoadData FIX"); 
+
+// NEW: Helper to parse DMS strings (e.g. "126°55'17"") into parts
+function parseDmsString(dmsStr) {
+    if (!dmsStr) return { d: '', m: '', s: '' };
+    // Flexible parser for °, ', ", ., and spaces
+    const parts = String(dmsStr).replace(/°/g, ' ').replace(/'/g, ' ').replace(/"/g, ' ').replace(/\./g, ' ').split(' ').filter(Boolean);
+    return {
+        d: parts[0] || '',
+        m: parts[1] || '',
+        s: parts[2] || ''
+    };
+}
+
+// NEW: Helper to read from a 3-box DMS input group
+function readDmsGroup(groupElement) {
+    const d = parseFloat(groupElement.querySelector('.dms-deg').value) || 0;
+    const m = parseFloat(groupElement.querySelector('.dms-min').value) || 0;
+    const s = parseFloat(groupElement.querySelector('.dms-sec').value) || 0;
+    return d + (m / 60) + (s / 3600);
+}
+
+// NEW: Helper to combine values from a 3-box DMS input group into a string
+function combineDmsGroup(groupElement) {
+    const d = groupElement.querySelector('.dms-deg').value;
+    const m = groupElement.querySelector('.dms-min').value;
+    const s = groupElement.querySelector('.dms-sec').value;
+    // Only combine if all three are filled
+    if (d === '' && m === '' && s === '') return '';
+    return `${d || 0}°${m || 0}'${s || 0}"`;
+}
+
+// Converts Decimal Degrees to "DDD°MM'SS"" string
+function ddToDms(dd) {
+    let d = Math.trunc(dd);
+    let min_float = Math.abs(dd - d) * 60;
+    let m = Math.trunc(min_float);
+    let s = ((min_float - m) * 60).toFixed(0);
+    if (s == 60) { m++; s = 0; }
+    if (m == 60) { d++; m = 0; }
+    // NEW: Format with symbols and padding
+    let dStr = d.toString().padStart(3, '0');
+    let mStr = m.toString().padStart(2, '0');
+    let sStr = s.toString().padStart(2, '0');
+    return `${dStr}°${mStr}'${sStr}"`;
+}
+
+// Helper for sin/cos in degrees
+const sin_d = (deg) => Math.sin(deg * Math.PI / 180);
+const cos_d = (deg) => Math.cos(deg * Math.PI / 180);
+
+// Helper to convert atan2 radians to a 0-360 degree bearing
+function atan2ToBearing(atan2_rad) {
+    let deg = atan2_rad * (180 / Math.PI);
+    return (deg + 360) % 360; // Corrects for negative angles
+}
+
+// Length Conversion Constants (all relative to 1 meter)
+const LENGTH_CONVERSIONS = {
+    'm': 1.0,
+    'mm': 1000.0,
+    'cm': 100.0,
+    'km': 0.001,
+    'ft': 3.2808399,
+    'in': 39.3700787,
+    'yd': 1.0936133,
+    'mi': 0.00062137,
+    'lk': 4.9709695 // Gunter's Link
+};
+
+// Area Conversion Constants (all relative to 1 square meter)
+const AREA_CONVERSIONS = {
+    'm2': 1.0,
+    'km2': 0.000001,
+    'ft2': 10.7639104,
+    'ac': 0.00024711,
+    'ha': 0.0001
+};
+
+
+/* ==============================================
+   SECTION 2: MAIN PROGRAM LOGIC
+   ============================================== */
+
+// Wait for the page to load before doing anything
+document.addEventListener('DOMContentLoaded', () => {
+    
+    console.log("DOMContentLoaded event fired. App is starting."); 
+
+    // --- PDF Library Check ---
+    if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined') {
+        console.error("jsPDF library not loaded! PDF export will fail.");
+    } else {
+        console.log("jsPDF library loaded successfully.");
+    }
+
+    // --- TAB-SWITCHING LOGIC ---
+    const tabLinks = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabLinks.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault(); // Stop the link from jumping
+            
+            const targetId = tab.getAttribute('data-tab');
+            const targetContent = document.getElementById(targetId);
+
+            tabLinks.forEach(link => link.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            tab.classList.add('active');
+            targetContent.classList.add('active');
+        });
+    });
+    console.log("Tab navigation attached.");
+    // --- END TAB LOGIC ---
+
+
+    // --- Get Leveling Elements ---
+    const levelTab = document.getElementById('leveling'); 
+    const levelMethodSelect = document.getElementById('levelMethodSelect'); // NEW
+    const calcLevelButton = document.getElementById('calculateLeveling');
+    const levelBook = document.getElementById('levelBook').getElementsByTagName('tbody')[0];
+    const levelResultsTable = document.getElementById('levelResults').getElementsByTagName('tbody')[0];
+    const levelChecksDiv = document.getElementById('levelChecks');
+    const addLevelRowButton = document.getElementById('addRow'); 
+    const clearLevelButton = document.getElementById('clearLevelData'); 
+    const exportLevelCsvButton = document.getElementById('exportLevelCsv');
+    const exportLevelPdfButton = document.getElementById('exportLevelPdf'); // NEW
+
+    // --- Get Traverse Elements ---
+    const traverseTab = document.getElementById('traverse'); 
+    const traverseMethodSelect = document.getElementById('traverseMethodSelect'); // NEW
+    const calcTraverseButton = document.getElementById('calculateTraverse');
+    const traverseBook = document.getElementById('traverseBook').getElementsByTagName('tbody')[0];
+    const traverseResultsDiv = document.getElementById('traverseResults');
+    const addTraverseRowButton = document.getElementById('addTraverseRow'); 
+    const clearTraverseButton = document.getElementById('clearTraverseData'); 
+
+    // --- Get Radiation Elements ---
+    const radiationBook = document.getElementById('radiationBook').getElementsByTagName('tbody')[0];
+    const radiationResultsTable = document.getElementById('radiationResults').getElementsByTagName('tbody')[0];
+    const addRadiationRowButton = document.getElementById('addRadiationRow');
+    const calculateRadiationButton = document.getElementById('calculateRadiation');
+    const clearRadiationDataButton = document.getElementById('clearRadiationData');
+    const exportRadiationCsvButton = document.getElementById('exportRadiationCsv');
+
+    // --- Get Pol/Rec Elements ---
+    const calcPolButton = document.getElementById('calculatePol');
+    const calcRecButton = document.getElementById('calculateRec');
+    const polResultDiv = document.getElementById('polResult');
+    const recResultDiv = document.getElementById('recResult');
+
+    // --- Get Unit Conversion Elements ---
+    const convertLengthButton = document.getElementById('convertLength');
+    const convertDmsButton = document.getElementById('convertDms');
+    const convertDdButton = document.getElementById('convertDd');
+    const lengthResultDiv = document.getElementById('lengthResult');
+    const dmsResultDiv = document.getElementById('dmsResult');
+    const ddResultDiv = document.getElementById('ddResult');
+    const convertAreaButton = document.getElementById('convertArea');
+    const areaResultDiv = document.getElementById('areaResult');
+    const convertRadToDegBtn = document.getElementById('convertRadToDeg');
+    const convertDegToRadBtn = document.getElementById('convertDegToRad');
+    const radToDegResultDiv = document.getElementById('radToDegResult');
+    const degToRadResultDiv = document.getElementById('degToRadResult');
+
+    // --- Get Area Calc Elements ---
+    const areaBook = document.getElementById('areaBook').getElementsByTagName('tbody')[0];
+    const addAreaRowButton = document.getElementById('addAreaRow');
+    const calculateAreaButton = document.getElementById('calculateArea');
+    const clearAreaDataButton = document.getElementById('clearAreaData');
+    const areaCalcResultDiv = document.getElementById('areaCalcResult');
+    
+    // --- Get Coord Math Elements ---
+    const calcDeltaToPolBtn = document.getElementById('calcDeltaToPol');
+    const calcPolToDeltaBtn = document.getElementById('calcPolToDelta');
+    const deltaToPolResultDiv = document.getElementById('deltaToPolResult');
+    const polToDeltaResultDiv = document.getElementById('polToDeltaResult');
+
+    // --- Get File Menu Elements ---
+    const newProjectButton = document.getElementById('newProject');
+    const importProjectInput = document.getElementById('importProjectInput');
+    const exportProjectButton = document.getElementById('exportProject');
+
+
+    // --- Attach Event Listeners ---
+    if (calcLevelButton) {
+        calcLevelButton.addEventListener('click', calculateLeveling);
+    }
+    if (addLevelRowButton) { 
+        addLevelRowButton.addEventListener('click', () => addMultipleRows('level')); // UPDATED
+        console.log("Event listener for 'Add Level Row' attached."); 
+    } else {
+        console.error("'Add Level Row' button (id='addRow') NOT FOUND."); 
+    }
+    
+    if (calcTraverseButton) {
+        calcTraverseButton.addEventListener('click', calculateTraverse);
+    }
+    if (addTraverseRowButton) { 
+        addTraverseRowButton.addEventListener('click', () => addMultipleRows('traverse')); // UPDATED
+        console.log("Event listener for 'Add Traverse Row' attached."); 
+    } else {
+        console.error("'Add Traverse Row' button (id='addTraverseRow') NOT FOUND."); 
+    }
+
+    // --- Attach Radiation Listeners ---
+    if (addRadiationRowButton) {
+        addRadiationRowButton.addEventListener('click', () => addMultipleRows('radiation')); // UPDATED
+        console.log("Event listener for 'Add Radiation Row' attached.");
+    }
+    if (calculateRadiationButton) {
+        calculateRadiationButton.addEventListener('click', calculateRadiation);
+    }
+    if (clearRadiationDataButton) {
+        clearRadiationDataButton.addEventListener('click', () => {
+             if (confirm("Are you sure you want to clear all radiation data? This cannot be undone.")) {
+                clearData('radiation');
+            }
+        });
+    }
+    if (exportRadiationCsvButton) {
+        exportRadiationCsvButton.addEventListener('click', () => {
+            // This export is simple (just the table)
+            const csvData = getTableCsvData(radiationResultsTable.parentElement);
+            const projectName = (document.getElementById('projectName').value || 'Untitled Project').replace(/[^a-z0-9_ -]/gi, '_');
+            downloadCsv(csvData, `${projectName}_radiation_results.csv`);
+        });
+    }
+
+
+    if(calcPolButton) {
+        calcPolButton.addEventListener('click', calculatePol);
+    }
+    if(calcRecButton) {
+        calcRecButton.addEventListener('click', calculateRec);
+    }
+
+    // --- Unit Conversion Listeners ---
+    if (convertLengthButton) {
+        convertLengthButton.addEventListener('click', convertLength);
+    }
+    if (convertDmsButton) {
+        convertDmsButton.addEventListener('click', convertDmsToDd);
+    }
+    if (convertDdButton) {
+        convertDdButton.addEventListener('click', convertDdToDms);
+    }
+    if (convertAreaButton) {
+        convertAreaButton.addEventListener('click', convertArea);
+    }
+    if (convertRadToDegBtn) {
+        convertRadToDegBtn.addEventListener('click', convertRadToDeg);
+    }
+    if (convertDegToRadBtn) {
+        convertDegToRadBtn.addEventListener('click', convertDegToRad);
+    }
+
+    // --- Coord Math Listeners ---
+    if (calcDeltaToPolBtn) {
+        calcDeltaToPolBtn.addEventListener('click', calculateDeltaToPol);
+    }
+    if (calcPolToDeltaBtn) {
+        calcPolToDeltaBtn.addEventListener('click', calculatePolToDelta);
+    }
+
+    // --- Clear Button Listeners ---
+    if (clearLevelButton) {
+        clearLevelButton.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear all leveling data? This cannot be undone.")) {
+                clearData('leveling');
+            }
+        });
+    }
+    if (clearTraverseButton) {
+        clearTraverseButton.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear all traverse data? This cannot be undone.")) {
+                clearData('traverse');
+            }
+        });
+    }
+
+    // --- Area Calc Listeners ---
+    if (addAreaRowButton) {
+        addAreaRowButton.addEventListener('click', () => addMultipleRows('area')); // UPDATED
+        console.log("Event listener for 'Add Area Row' attached.");
+    }
+    if (calculateAreaButton) {
+        calculateAreaButton.addEventListener('click', calculateArea);
+    }
+    if (clearAreaDataButton) {
+        clearAreaDataButton.addEventListener('click', () => {
+             if (confirm("Are you sure you want to clear all area data? This cannot be undone.")) {
+                clearData('area');
+            }
+        });
+    }
+    
+    // --- File Menu Listeners ---
+    if (newProjectButton) {
+        newProjectButton.addEventListener('click', clearAllData);
+    }
+    if (importProjectInput) {
+        importProjectInput.addEventListener('change', importProject);
+    }
+    if (exportProjectButton) {
+        exportProjectButton.addEventListener('click', exportProject);
+    }
+    
+    // --- CSV/PDF Export Listeners ---
+    if (exportLevelCsvButton) {
+        exportLevelCsvButton.addEventListener('click', exportLevelingReportToCsv);
+    }
+    if (exportLevelPdfButton) { // NEW
+        exportLevelPdfButton.addEventListener('click', exportLevelingReportToPdf);
+    }
+    
+    // --- NEW: TRAVERSE EXPORT LISTENER (FIXED) ---
+    traverseResultsDiv.addEventListener('click', (e) => {
+        if (e.target.id === 'exportTraverseCsv') {
+            exportTraverseReportToCsv();
+        }
+        if (e.target.id === 'exportTraversePdf') {
+            exportTraverseReportToPdf();
+        }
+    });
+
+    // --- Listeners for Leveling Dropdown ---
+    if (levelMethodSelect) {
+        levelMethodSelect.addEventListener('change', () => {
+            if (levelMethodSelect.value === 'hoc') {
+                levelTab.classList.add('show-hoc');
+                levelTab.classList.remove('show-rf');
+            } else {
+                levelTab.classList.add('show-rf');
+                levelTab.classList.remove('show-hoc');
+            }
+        });
+    }
+    
+    // --- Listeners for Traverse Dropdown ---
+    if (traverseMethodSelect) {
+        traverseMethodSelect.addEventListener('change', () => {
+            const selectedMethod = traverseMethodSelect.value;
+            traverseTab.classList.remove('show-traverse-loop', 'show-traverse-link', 'show-traverse-open');
+            traverseTab.classList.add(`show-traverse-${selectedMethod}`);
+        });
+    }
+
+    // --- Delete Row Event Listeners (Event Delegation) ---
+    levelBook.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-row-btn')) {
+            e.target.closest('tr').remove();
+            if (levelBook.rows.length === 0) addLevelRow();
+            saveData(); // Save after deleting
+        }
+    });
+    traverseBook.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-row-btn')) {
+            e.target.closest('tr').remove();
+            if (traverseBook.rows.length === 0) addTraverseRow();
+            saveData(); // Save after deleting
+        }
+    });
+    radiationBook.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-row-btn')) {
+            e.target.closest('tr').remove();
+            if (radiationBook.rows.length === 0) addRadiationRow();
+            saveData(); // Save after deleting
+        }
+    });
+    areaBook.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-row-btn')) {
+            e.target.closest('tr').remove();
+            if (areaBook.rows.length === 0) addAreaRow();
+            saveData(); // Save after deleting
+        }
+    });
+
+    
+    /* ==============================================
+       SAVE, LOAD, & CLEAR FUNCTIONS
+       ============================================== */
+
+    // --- Auto-save on any input change ---
+    document.querySelector('main').addEventListener('input', (e) => {
+        if (e.target.classList.contains('auto-save')) {
+            console.log("Auto-saving data...");
+            saveData();
+        }
+    });
+
+    // NEW LOCALSTORAGE KEY TO FIX "STUCK" DATA
+    const STORAGE_KEY = 'surveyData_v11';
+
+    function saveData() {
+        let surveyData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+        // --- Save Project Name ---
+        surveyData.projectName = document.getElementById('projectName').value || 'Untitled Project';
+
+        // --- Save Leveling Data ---
+        let levelBookData = [];
+        for (let row of levelBook.rows) {
+            levelBookData.push({
+                bs: row.cells[0].querySelector('input').value,
+                is: row.cells[1].querySelector('input').value,
+                fs: row.cells[2].querySelector('input').value,
+                remarks: row.cells[3].querySelector('input').value,
+            });
+        }
+        surveyData.leveling = {
+            startRL: document.getElementById('startRL').value,
+            closeRL: document.getElementById('closeRL').value,
+            levelDist: document.getElementById('levelDist').value,
+            levelConst: document.getElementById('levelConst').value,
+            method: document.getElementById('levelMethodSelect').value, // UPDATED
+            table: levelBookData
+        };
+
+        // --- Save Traverse Data ---
+        let traverseBookData = [];
+        for (let row of traverseBook.rows) {
+            traverseBookData.push({
+                from: row.cells[0].querySelector('input').value,
+                to: row.cells[1].querySelector('input').value,
+                azimuth: combineDmsGroup(row.cells[2]), // UPDATED
+                dist: row.cells[3].querySelector('input').value,
+            });
+        }
+        surveyData.traverse = {
+            startNorth: document.getElementById('startNorth').value,
+            startEast: document.getElementById('startEast').value,
+            allowablePrecision: document.getElementById('allowablePrecision').value,
+            method: document.getElementById('traverseMethodSelect').value, // UPDATED
+            adjustmentMethod: document.getElementById('adjustmentMethodSelect').value, // UPDATED
+            closeNorth: document.getElementById('closeNorth').value,
+            closeEast: document.getElementById('closeEast').value,
+            table: traverseBookData
+        };
+        
+        // --- Save Radiation Data ---
+        let radiationBookData = [];
+        for (let row of radiationBook.rows) {
+            radiationBookData.push({
+                station: row.cells[0].querySelector('input').value,
+                angle: combineDmsGroup(row.cells[1]), // UPDATED
+                dist: row.cells[2].querySelector('input').value,
+            });
+        }
+        surveyData.radiation = {
+            setupN: document.getElementById('radSetupN').value,
+            setupE: document.getElementById('radSetupE').value,
+            bsN: document.getElementById('radBsN').value,
+            bsE: document.getElementById('radBsE').value,
+            table: radiationBookData
+        };
+        
+        // --- Save Area Data ---
+        let areaBookData = [];
+        for (let row of areaBook.rows) {
+            areaBookData.push({
+                station: row.cells[0].querySelector('input').value,
+                north: row.cells[1].querySelector('input').value,
+                east: row.cells[2].querySelector('input').value,
+            });
+        }
+        surveyData.area = {
+            table: areaBookData
+        };
+
+        // --- Save Pol/Rec Data ---
+        surveyData.polRec = {
+            polStartN: document.getElementById('polStartN').value,
+            polStartE: document.getElementById('polStartE').value,
+            polBearing: combineDmsGroup(document.getElementById('polBearingGroup')), // UPDATED
+            polDist: document.getElementById('polDist').value,
+            recStartN: document.getElementById('recStartN').value,
+            recStartE: document.getElementById('recStartE').value,
+            recEndN: document.getElementById('recEndN').value,
+            recEndE: document.getElementById('recEndE').value,
+        };
+
+        // --- Save Coord Math Data ---
+        surveyData.coordMath = {
+            deltaN: document.getElementById('deltaN_in').value,
+            deltaE: document.getElementById('deltaE_in').value,
+            azimuth: combineDmsGroup(document.getElementById('polAzimuthGroup')), // UPDATED
+            distance: document.getElementById('polDist_in').value,
+        };
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(surveyData));
+    }
+
+    function loadData() {
+        let surveyData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!surveyData) {
+            console.log("No saved data found. Creating blank rows.");
+            // Create one blank row for each table so "Add Row" works
+            addLevelRow();
+            addTraverseRow();
+            addAreaRow();
+            addRadiationRow(); 
+            
+            // **** THIS IS THE FIX for the CRASH ****
+            // Set default dropdown text
+            const polBearingGroup = document.getElementById('polBearingGroup');
+            if (polBearingGroup) {
+                polBearingGroup.querySelector('.dms-deg').value = "45";
+                polBearingGroup.querySelector('.dms-min').value = "00";
+                polBearingGroup.querySelector('.dms-sec').value = "00";
+            }
+        
+            const polAzimuthGroup = document.getElementById('polAzimuthGroup');
+            if (polAzimuthGroup) {
+                polAzimuthGroup.querySelector('.dms-deg').value = "45";
+                polAzimuthGroup.querySelector('.dms-min').value = "00";
+                polAzimuthGroup.querySelector('.dms-sec').value = "00";
+            }
+            return;
+        }
+
+        console.log("Loading saved data...");
+
+        // --- Load Project Name ---
+        document.getElementById('projectName').value = surveyData.projectName || 'Untitled Project';
+
+        // --- Load Leveling Data ---
+        if (surveyData.leveling) {
+            document.getElementById('startRL').value = surveyData.leveling.startRL || '';
+            document.getElementById('closeRL').value = surveyData.leveling.closeRL || '';
+            document.getElementById('levelDist').value = surveyData.leveling.levelDist || '';
+            document.getElementById('levelConst').value = surveyData.leveling.levelConst || '12';
+            
+            // UPDATED
+            const levelMethod = surveyData.leveling.method || 'rf';
+            document.getElementById('levelMethodSelect').value = levelMethod;
+            if (levelMethod === 'hoc') {
+                levelTab.classList.add('show-hoc');
+                levelTab.classList.remove('show-rf');
+            } else {
+                levelTab.classList.add('show-rf');
+                levelTab.classList.remove('show-hoc');
+            }
+
+            if (surveyData.leveling.table && surveyData.leveling.table.length > 0) {
+                levelBook.innerHTML = ''; // Clear the blank row
+                for (const row of surveyData.leveling.table) {
+                    addLevelRow(row); // Add a new row and pass the data to it
+                }
+            } else {
+                addLevelRow(); // Add one blank row if table is empty
+            }
+        } else {
+            addLevelRow(); // Add one blank row if no save data
+        }
+
+        // --- Load Traverse Data ---
+        if (surveyData.traverse) {
+            document.getElementById('startNorth').value = surveyData.traverse.startNorth || '';
+            document.getElementById('startEast').value = surveyData.traverse.startEast || '';
+            document.getElementById('allowablePrecision').value = surveyData.traverse.allowablePrecision || '5000';
+            
+            document.getElementById('closeNorth').value = surveyData.traverse.closeNorth || '';
+            document.getElementById('closeEast').value = surveyData.traverse.closeEast || '';
+            
+            // UPDATED
+            const traverseMethod = surveyData.traverse.method || 'loop';
+            document.getElementById('traverseMethodSelect').value = traverseMethod;
+            traverseTab.classList.remove('show-traverse-loop', 'show-traverse-link', 'show-traverse-open');
+            traverseTab.classList.add(`show-traverse-${traverseMethod}`);
+            
+            // UPDATED
+            document.getElementById('adjustmentMethodSelect').value = surveyData.traverse.adjustmentMethod || 'bowditch';
+
+
+            if (surveyData.traverse.table && surveyData.traverse.table.length > 0) {
+                traverseBook.innerHTML = ''; // Clear the blank row
+                for (const row of surveyData.traverse.table) {
+                    addTraverseRow(row); // Add a new row and pass the data to it
+                }
+            } else {
+                addTraverseRow(); // Add one blank row if table is empty
+            }
+        } else {
+             addTraverseRow(); // Add one blank row if no save data
+        }
+
+        // --- Load Radiation Data ---
+        if (surveyData.radiation) {
+            document.getElementById('radSetupN').value = surveyData.radiation.setupN || '';
+            document.getElementById('radSetupE').value = surveyData.radiation.setupE || '';
+            document.getElementById('radBsN').value = surveyData.radiation.bsN || '';
+            document.getElementById('radBsE').value = surveyData.radiation.bsE || '';
+            
+             if (surveyData.radiation.table && surveyData.radiation.table.length > 0) {
+                radiationBook.innerHTML = ''; // Clear the blank row
+                for (const row of surveyData.radiation.table) {
+                    addRadiationRow(row); // Add a new row and pass the data to it
+                }
+            } else {
+                addRadiationRow(); // Add one blank row if table is empty
+            }
+        } else {
+            addRadiationRow(); // Add one blank row if no save data
+        }
+
+        // --- Load Area Data ---
+        if (surveyData.area) {
+             if (surveyData.area.table && surveyData.area.table.length > 0) {
+                areaBook.innerHTML = ''; // Clear the blank row
+                for (const row of surveyData.area.table) {
+                    addAreaRow(row); // Add a new row and pass the data to it
+                }
+            } else {
+                addAreaRow(); // Add one blank row if table is empty
+            }
+        } else {
+            addAreaRow(); // Add one blank row if no save data
+        }
+
+        // --- Load Pol/Rec Data ---
+        if (surveyData.polRec) {
+            document.getElementById('polStartN').value = surveyData.polRec.polStartN || '1000.000';
+            document.getElementById('polStartE').value = surveyData.polRec.polStartE || '1000.000';
+            
+            // Load DMS
+            const polParts = parseDmsString(surveyData.polRec.polBearing || '45°0\'0"');
+            const polGroup = document.getElementById('polBearingGroup');
+            polGroup.querySelector('.dms-deg').value = polParts.d;
+            polGroup.querySelector('.dms-min').value = polParts.m;
+            polGroup.querySelector('.dms-sec').value = polParts.s;
+
+            document.getElementById('polDist').value = surveyData.polRec.polDist || '';
+            document.getElementById('recStartN').value = surveyData.polRec.recStartN || '1000.000';
+            document.getElementById('recStartE').value = surveyData.polRec.recStartE || '1000.000';
+            document.getElementById('recEndN').value = surveyData.polRec.recEndN || '';
+            document.getElementById('recEndE').value = surveyData.polRec.recEndE || '';
+        }
+        
+        // --- Load Coord Math Data ---
+        if (surveyData.coordMath) {
+            document.getElementById('deltaN_in').value = surveyData.coordMath.deltaN || '70.711';
+            document.getElementById('deltaE_in').value = surveyData.coordMath.deltaE || '70.711';
+            
+            const cmParts = parseDmsString(surveyData.coordMath.azimuth || '45°0\'0"');
+            const cmGroup = document.getElementById('polAzimuthGroup');
+            cmGroup.querySelector('.dms-deg').value = cmParts.d;
+            cmGroup.querySelector('.dms-min').value = cmParts.m;
+            cmGroup.querySelector('.dms-sec').value = cmParts.s;
+            
+            document.getElementById('polDist_in').value = surveyData.coordMath.distance || '100.000';
+        }
+    }
+
+    function clearData(section) {
+        let surveyData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!surveyData) return;
+
+        if (section === 'leveling' && surveyData.leveling) {
+            delete surveyData.leveling;
+        }
+        if (section === 'traverse' && surveyData.traverse) {
+            delete surveyData.traverse;
+        }
+        if (section === 'area' && surveyData.area) {
+            delete surveyData.area;
+        }
+        if (section === 'radiation' && surveyData.radiation) { 
+            delete surveyData.radiation;
+        }
+        // We don't need to clear coordMath, it's trivial
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(surveyData));
+        location.reload(); // Reload the page to show the cleared state
+    }
+    
+    // --- Clear All Data (for New Project button) ---
+    function clearAllData() {
+        if (confirm("Are you sure you want to start a new project?\nAll auto-saved data will be permanently cleared.")) {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+    }
+    
+    // --- Export Project (Save As) ---
+    function exportProject() {
+        // First, save any pending changes
+        saveData();
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (!data) {
+            alert("No data to export.");
+            return;
+        }
+        
+        // Get project name and sanitize it
+        let projectName = document.getElementById('projectName').value;
+        let filename = (projectName || "survey-project").replace(/[^a-z0-9_ -]/gi, '_') + '.json';
+        
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    // --- Import Project (Open) ---
+    function importProject(event) {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = e.target.result;
+                // Test if it's valid JSON before saving
+                JSON.parse(data); 
+                localStorage.setItem(STORAGE_KEY, data);
+                alert("Project imported successfully! The page will now reload.");
+                location.reload();
+            } catch (error) {
+                alert("Error: The selected file is not a valid survey project file.");
+            }
+        };
+        reader.readAsText(file);
+        
+        // Reset the input so you can load the same file again
+        event.target.value = null;
+    }
+    
+    // --- CSV/PDF EXPORT FUNCTIONS ---
+
+    // Helper to sanitize text for CSV
+    function sanitizeCsvCell(text) {
+        let cell = text.replace(/(\r\n|\n|\r)/gm, " ").replace(/,/g, "");
+        return `"${cell}"`;
+    }
+
+    // Helper to download the CSV content
+    function downloadCsv(csvArray, filename) {
+        const csvContent = "data:text/csv;charset=utf-8," + csvArray.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const a = document.createElement('a');
+        a.href = encodedUri;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+    
+    // **** THIS IS THE NEW, FIXED FUNCTION ****
+    // Helper to get CSV data from a table (respecting visible columns AND colspans)
+    function getTableCsvData(tableEl) {
+        let csv = [];
+        const rows = tableEl.querySelectorAll("tr");
+        
+        for (const row of rows) {
+            let rowData = [];
+            const cols = row.querySelectorAll("td, th");
+            
+            for (const col of cols) {
+                // Check if the column is visible
+                const style = window.getComputedStyle(col);
+                if (style.display !== 'none') {
+                    rowData.push(sanitizeCsvCell(col.innerText));
+                    // NEW: Handle colspans
+                    if (col.hasAttribute('colspan')) {
+                        const span = parseInt(col.getAttribute('colspan')) || 1;
+                        for (let i = 1; i < span; i++) {
+                            rowData.push('""'); // Add empty cells for the span
+                        }
+                    }
+                }
+            }
+            csv.push(rowData.join(","));
+        }
+        return csv;
+    }
+
+    // Export for Leveling (Table + Checks)
+    function exportLevelingReportToCsv() {
+        const projectName = (document.getElementById('projectName').value || 'Untitled Project').replace(/[^a-z0-9_ -]/gi, '_');
+        let csvData = getTableCsvData(levelResultsTable.parentElement);
+        
+        csvData.push('""'); // Add a blank line
+        csvData.push('"--- Checks ---"');
+        
+        const checks = levelChecksDiv.querySelectorAll("h4, p");
+        checks.forEach(el => {
+            csvData.push(sanitizeCsvCell(el.textContent)); // Use textContent
+        });
+        
+        downloadCsv(csvData, `${projectName}_leveling_report.csv`);
+    }
+
+    // **** THIS IS THE NEW, FIXED FUNCTION ****
+    // Export for Traverse (Complex Report)
+    function exportTraverseReportToCsv() {
+        const projectName = (document.getElementById('projectName').value || 'Untitled Project').replace(/[^a-z0-9_ -]/gi, '_');
+        let csvData = [];
+        
+        // Loop through all child nodes of the results div
+        traverseResultsDiv.childNodes.forEach(node => {
+            // If it's a heading or paragraph, add its text
+            if (node.nodeName === "H4" || node.nodeName === "P") {
+                csvData.push(sanitizeCsvCell(node.textContent));
+            }
+            
+            // If it's a table (like the linear check), get its data
+            if (node.nodeName === "TABLE") {
+                csvData = csvData.concat(getTableCsvData(node)); // This now works for simple tables
+                csvData.push('""'); // Add a blank line after
+            }
+            
+            // If it's the table wrapper, get the main table's data
+            if (node.classList && node.classList.contains("table-wrapper")) {
+                const mainTable = node.querySelector("table");
+                if (mainTable) {
+                    csvData = csvData.concat(getTableCsvData(mainTable)); // This now works for the main table
+                    csvData.push('""'); // Add a blank line after
+                }
+            }
+        });
+        
+        downloadCsv(csvData, `${projectName}_traverse_report.csv`);
+    }
+    
+    // --- PDF Export Functions ---
+    const { jsPDF } = jspdf;
+
+    function exportLevelingReportToPdf() {
+        try {
+            const doc = new jsPDF({ orientation: 'landscape' });
+            const projectName = document.getElementById('projectName').value;
+            
+            doc.text(`Project: ${projectName}`, 14, 15);
+            doc.text("Leveling Results", 14, 22);
+
+            // Get visible columns
+            let columns = [];
+            let head = [];
+            levelResultsTable.parentElement.querySelectorAll("thead th").forEach(th => {
+                if (window.getComputedStyle(th).display !== 'none') {
+                    columns.push(th.textContent); // Use textContent
+                }
+            });
+            head.push(columns);
+
+            // Get body data
+            let body = [];
+            levelResultsTable.querySelectorAll("tbody tr").forEach(tr => {
+                let row = [];
+                tr.querySelectorAll("td").forEach(td => {
+                    if (window.getComputedStyle(td).display !== 'none') {
+                        row.push(td.textContent); // Use textContent
+                    }
+                });
+                body.push(row);
+            });
+
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 25,
+                styles: { fontSize: 9, cellPadding: 1.5 }, // NEW: Smaller font
+                headStyles: { fillColor: [0, 86, 179], fontSize: 9 }, // NEW: Darker blue
+            });
+
+            let finalY = doc.autoTable.previous.finalY;
+            
+            // Add Checks
+            let checkLines = [];
+            levelChecksDiv.querySelectorAll("h4, p").forEach(el => {
+                checkLines.push(el.textContent); // Use textContent
+            });
+            
+            doc.text("--- Checks ---", 14, finalY + 10);
+            doc.setFontSize(10);
+            doc.text(checkLines, 14, finalY + 15);
+            
+            doc.save(`${projectName}_leveling_report.pdf`);
+        } catch (e) {
+            console.error("PDF Export Error: ", e);
+            alert("Error exporting PDF. Check console for details.");
+        }
+    }
+
+    function exportTraverseReportToPdf() {
+        try {
+            const doc = new jsPDF({ orientation: 'landscape' });
+            const projectName = document.getElementById('projectName').value;
+            let finalY = 15;
+            
+            doc.text(`Project: ${projectName}`, 14, finalY);
+            finalY += 7;
+            doc.text("Traverse Results", 14, finalY);
+            finalY += 3;
+
+            // Loop through all child nodes of the results div
+            traverseResultsDiv.childNodes.forEach(node => {
+                finalY = doc.autoTable.previous ? doc.autoTable.previous.finalY : finalY;
+                
+                if (node.nodeName === "H4" || node.nodeName === "P") {
+                    finalY += 10;
+                    doc.text(node.textContent, 14, finalY); // Use textContent
+                }
+                
+                // NEW: Manually parse ALL tables to avoid HTML entity bug
+                if (node.nodeName === "TABLE" || (node.classList && node.classList.contains("table-wrapper"))) {
+                    let tableEl;
+                    if(node.nodeName === "TABLE") {
+                        tableEl = node; // This is the Linear Check table
+                    } else {
+                        tableEl = node.querySelector("table"); // This is the main results table
+                    }
+                    
+                    if (tableEl) {
+                        let head = [];
+                        let body = [];
+                        
+                        // Get Head
+                        let headRow = [];
+                        tableEl.querySelectorAll("thead th").forEach(th => {
+                            headRow.push(th.textContent); // Use textContent
+                        });
+                        head.push(headRow);
+                        
+                        // Get Body
+                        tableEl.querySelectorAll("tbody tr").forEach(tr => {
+                            let bodyRow = [];
+                            tr.querySelectorAll("td").forEach(td => {
+                                bodyRow.push(td.textContent); // Use textContent
+                            });
+                            body.push(bodyRow);
+                        });
+
+                        doc.autoTable({
+                            head: head,
+                            body: body,
+                            startY: finalY + 5,
+                            styles: { fontSize: 8, cellPadding: 1.5 }, // NEW: Smaller font
+                            headStyles: { fillColor: [0, 86, 179], fontSize: 8 }, // NEW: Darker blue
+                            margin: { left: 14, right: 14 }
+                        });
+                        finalY = doc.autoTable.previous.finalY;
+                    }
+                }
+            });
+
+            doc.save(`${projectName}_traverse_report.pdf`);
+        } catch (e) {
+            console.error("PDF Export Error: ", e);
+            alert("Error exporting PDF. Check console for details.");
+        }
+    }
+
+
+    /* ==============================================
+       ROW & CALCULATION FUNCTIONS
+       ============================================== */
+       
+    // --- NEW: Add Multiple Rows ---
+    function addMultipleRows(type) {
+        let numInput, addFunc;
+        
+        if (type === 'level') {
+            numInput = document.getElementById('levelRowNum');
+            addFunc = addLevelRow;
+        } else if (type === 'traverse') {
+            numInput = document.getElementById('traverseRowNum');
+            addFunc = addTraverseRow;
+        } else if (type === 'radiation') {
+            numInput = document.getElementById('radiationRowNum');
+            addFunc = addRadiationRow;
+        } else if (type === 'area') {
+            numInput = document.getElementById('areaRowNum');
+            addFunc = addAreaRow;
+        } else {
+            return;
+        }
+
+        const num = parseInt(numInput.value);
+        if (isNaN(num) || num < 1 || num > 100) {
+            alert("Please enter a number between 1 and 100.");
+            numInput.value = 1;
+            return;
+        }
+        
+        for (let i = 0; i < num; i++) {
+            addFunc(); // Call the specific add row function
+        }
+        numInput.value = 1; // Reset to 1
+    }
+    
+    // --- LEVELING ADD ROW FUNCTION ---
+    function addLevelRow(data = null) {
+        console.log("'Add Level Row' button clicked."); 
+        const newRow = levelBook.insertRow(); // Insert a new blank row
+        
+        newRow.innerHTML = `
+            <td><input type="number" class="bs auto-save" step="0.001" value="${data && data.bs ? data.bs : ''}"></td>
+            <td><input type="number" class="is auto-save" step="0.001" value="${data && data.is ? data.is : ''}"></td>
+            <td><input type="number" class="fs auto-save" step="0.001" value="${data && data.fs ? data.fs : ''}"></td>
+            <td><input type="text" class="remarks auto-save" value="${data && data.remarks ? data.remarks : ''}"></td>
+            <td><button class="delete-row-btn" type="button">X</button></td>
+        `;
+    }
+    
+    // --- TRAVERSE ADD ROW FUNCTION ---
+    function addTraverseRow(data = null) {
+        console.log("'Add Traverse Row' button clicked."); 
+        const newRow = traverseBook.insertRow(); // Insert a new blank row
+        const parts = parseDmsString(data ? data.azimuth : null);
+
+        newRow.innerHTML = `
+            <td><input type="text" class="auto-save" value="${data && data.from ? data.from : ''}"></td>
+            <td><input type="text" class="auto-save" value="${data && data.to ? data.to : ''}"></td>
+            <td>
+                <div class="dms-input-group">
+                    <input type="number" class="dms-deg auto-save" placeholder="000" min="0" max="359" value="${parts.d}">
+                    <span class="dms-symbol">°</span>
+                    <input type="number" class="dms-min auto-save" placeholder="00" min="0" max="59" value="${parts.m}">
+                    <span class="dms-symbol">'</span>
+                    <input type="number" class="dms-sec auto-save" placeholder="00" min="0" max="59" value="${parts.s}">
+                    <span class="dms-symbol">"</span>
+                </div>
+            </td>
+            <td><input type="number" class="distance auto-save" step="0.01" value="${data && data.dist ? data.dist : ''}"></td>
+            <td><button class="delete-row-btn" type="button">X</button></td>
+        `;
+    }
+
+    // --- AREA ADD ROW FUNCTION ---
+    function addAreaRow(data = null) {
+        console.log("'Add Area Row' button clicked.");
+        const newRow = areaBook.insertRow(); // Insert a new blank row
+        
+        newRow.innerHTML = `
+            <td><input type="text" class="auto-save" value="${data && data.station ? data.station : ''}"></td>
+            <td><input type="number" class="auto-save" step="0.001" value="${data && data.north ? data.north : ''}"></td>
+            <td><input type="number" class="auto-save" step="0.001" value="${data && data.east ? data.east : ''}"></td>
+            <td><button class="delete-row-btn" type="button">X</button></td>
+        `;
+    }
+    
+    // --- RADIATION ADD ROW FUNCTION ---
+    function addRadiationRow(data = null) {
+        console.log("'Add Radiation Row' button clicked.");
+        const newRow = radiationBook.insertRow(); // Insert a new blank row
+        const parts = parseDmsString(data ? data.angle : null);
+        
+        newRow.innerHTML = `
+            <td><input type="text" class="auto-save" value="${data && data.station ? data.station : ''}"></td>
+            <td>
+                <div class="dms-input-group">
+                    <input type="number" class="dms-deg auto-save" placeholder="000" min="0" max="359" value="${parts.d}">
+                    <span class="dms-symbol">°</span>
+                    <input type="number" class="dms-min auto-save" placeholder="00" min="0" max="59" value="${parts.m}">
+                    <span class="dms-symbol">'</span>
+                    <input type="number" class="dms-sec auto-save" placeholder="00" min="0" max="59" value="${parts.s}">
+                    <span class="dms-symbol">"</span>
+                </div>
+            </td>
+            <td><input type="number" class="distance auto-save" step="0.01" value="${data && data.dist ? data.dist : ''}"></td>
+            <td><button class="delete-row-btn" type="button">X</button></td>
+        `;
+    }
+
+    // --- RADIATION CALCULATION FUNCTION ---
+    function calculateRadiation() {
+        radiationResultsTable.innerHTML = ''; // Clear previous results
+        
+        const setupN = parseFloat(document.getElementById('radSetupN').value);
+        const setupE = parseFloat(document.getElementById('radSetupE').value);
+        const bsN = parseFloat(document.getElementById('radBsN').value);
+        const bsE = parseFloat(document.getElementById('radBsE').value);
+        
+        if (isNaN(setupN) || isNaN(setupE) || isNaN(bsN) || isNaN(bsE)) {
+            alert("Please fill in all Setup and Backsight coordinates.");
+            return;
+        }
+
+        // 1. Calculate Backsight Bearing
+        const deltaN_bs = bsN - setupN;
+        const deltaE_bs = bsE - setupE;
+        const bsBearing = atan2ToBearing(Math.atan2(deltaE_bs, deltaN_bs));
+        
+        // 2. Loop through observations
+        for (let row of radiationBook.rows) {
+            let station = row.cells[0].querySelector('input').value;
+            let angleDd = readDmsGroup(row.cells[1]); // UPDATED
+            let distance = parseFloat(row.cells[2].querySelector('input').value);
+            
+            if (angleDd === 0 || isNaN(distance)) {
+                // Skip empty rows
+                if (angleDd === 0 && row.cells[2].querySelector('input').value === '') continue;
+                
+                alert(`Error: Invalid angle or distance for point ${station}.`);
+                return;
+            }
+            
+            // 3. Calculate Target Bearing
+            let targetBearing = (bsBearing + angleDd) % 360;
+            
+            // 4. Calculate Coordinates
+            let deltaN = distance * cos_d(targetBearing);
+            let deltaE = distance * sin_d(targetBearing);
+            
+            let targetN = setupN + deltaN;
+            let targetE = setupE + deltaE;
+            
+            // 5. Populate Results Table
+            let newRow = radiationResultsTable.insertRow();
+            newRow.innerHTML = `
+                <td>${station}</td>
+                <td>${targetN.toFixed(3)}</td>
+                <td>${targetE.toFixed(3)}</td>
+            `;
+        }
+    }
+
+
+    // --- AREA CALCULATION FUNCTION ---
+    function calculateArea() {
+        areaCalcResultDiv.innerHTML = ''; // Clear previous results
+        let coords = [];
+        for (let row of areaBook.rows) {
+            let north = parseFloat(row.cells[1].querySelector('input').value);
+            let east = parseFloat(row.cells[2].querySelector('input').value);
+            
+            if (isNaN(north) || isNaN(east)) {
+                // Skip rows that are empty
+                if (row.cells[1].querySelector('input').value === '' && row.cells[2].querySelector('input').value === '') {
+                    continue;
+                }
+                alert("Please make sure all Northing and Easting fields are valid numbers.");
+                return;
+            }
+            coords.push({ n: north, e: east });
+        }
+
+        if (coords.length < 3) {
+            alert("Please enter at least 3 points to calculate an area.");
+            return;
+        }
+        
+        // Shoelace Formula
+        let sum1 = 0; // (N1*E2 + ...)
+        let sum2 = 0; // (E1*N2 + ...)
+        
+        for (let i = 0; i < coords.length; i++) {
+            let p1 = coords[i];
+            let p2 = coords[(i + 1) % coords.length]; // Gets the next point, or wraps to first
+            
+            sum1 += (p1.n * p2.e);
+            sum2 += (p1.e * p2.n);
+        }
+        
+        const areaM2 = 0.5 * Math.abs(sum1 - sum2);
+        
+        // Convert to other units
+        const areaFt2 = areaM2 * AREA_CONVERSIONS['ft2'];
+        const areaAc = areaM2 * AREA_CONVERSIONS['ac'];
+        const areaHa = areaM2 * AREA_CONVERSIONS['ha'];
+        
+        areaCalcResultDiv.innerHTML = `
+            <h4>Calculated Area:</h4>
+            <p><strong>Square Meters:</strong> ${areaM2.toFixed(3)} m²</p>
+            <p><strong>Square Feet:</strong> ${areaFt2.toFixed(3)} ft²</p>
+            <p><strong>Acres:</strong> ${areaAc.toFixed(5)} ac</p>
+            <p><strong>Hectares:</strong> ${areaHa.toFixed(5)} ha</p>
+        `;
+    }
+
+
+    // --- Pol Calculation ---
+    function calculatePol() {
+        const startN = parseFloat(document.getElementById('polStartN').value);
+        const startE = parseFloat(document.getElementById('polStartE').value);
+        const bearingDd = readDmsGroup(document.getElementById('polBearingGroup')); // UPDATED
+        const distance = parseFloat(document.getElementById('polDist').value);
+
+        if (isNaN(startN) || isNaN(startE) || isNaN(distance) || bearingDd === 0) {
+            alert("Please fill in all Pol fields.");
+            return;
+        }
+        
+        const deltaN = distance * cos_d(bearingDd);
+        const deltaE = distance * sin_d(bearingDd);
+
+        const endN = startN + deltaN;
+        const endE = startE + deltaE;
+
+        polResultDiv.innerHTML = `
+            <h4>Calculated Coordinates:</h4>
+            <p><strong>End Northing:</strong> ${endN.toFixed(3)}</p>
+            <p><strong>End Easting:</strong> ${endE.toFixed(3)}</p>
+        `;
+    }
+
+    // --- Rec Calculation ---
+    function calculateRec() {
+        const startN = parseFloat(document.getElementById('recStartN').value);
+        const startE = parseFloat(document.getElementById('recStartE').value);
+        const endN = parseFloat(document.getElementById('recEndN').value);
+        const endE = parseFloat(document.getElementById('recEndE').value);
+
+        if (isNaN(startN) || isNaN(startE) || isNaN(endN) || isNaN(endE)) {
+            alert("Please fill in all Rec fields.");
+            return;
+        }
+
+        const deltaN = endN - startN;
+        const deltaE = endE - startE; // <<< BUG FIXED
+        const distance = Math.sqrt(deltaN**2 + deltaE**2);
+        
+        const bearingRad = Math.atan2(deltaE, deltaN);
+        const bearingDd = atan2ToBearing(bearingRad);
+        const bearingDms = ddToDms(bearingDd);
+
+        recResultDiv.innerHTML = `
+            <h4>Calculated Values:</h4>
+            <p><strong>Δ Northing:</strong> ${deltaN.toFixed(3)}</p>
+            <p><strong>Δ Easting:</strong> ${deltaE.toFixed(3)}</p>
+            <hr class="light" style="margin:10px 0;">
+            <p><strong>Azimuth:</strong> ${bearingDms}</p>
+            <p><strong>Distance:</strong> ${distance.toFixed(3)} m</p>
+        `;
+    }
+
+    // --- Unit Conversion Functions ---
+    function convertLength() {
+        const inputVal = parseFloat(document.getElementById('lengthInput').value);
+        const fromUnit = document.getElementById('lengthFrom').value;
+        const toUnit = document.getElementById('lengthTo').value;
+
+        if (isNaN(inputVal)) {
+            alert("Please enter a valid number for length.");
+            return;
+        }
+
+        const valInMeters = inputVal / LENGTH_CONVERSIONS[fromUnit];
+        const outputVal = valInMeters * LENGTH_CONVERSIONS[toUnit];
+
+        lengthResultDiv.innerHTML = `<h4>Result:</h4><p><strong>${outputVal.toFixed(8)}</strong> ${toUnit}</p>`;
+    }
+
+    function convertArea() {
+        const inputVal = parseFloat(document.getElementById('areaInput').value);
+        const fromUnit = document.getElementById('areaFrom').value;
+        const toUnit = document.getElementById('areaTo').value;
+
+        if (isNaN(inputVal)) {
+            alert("Please enter a valid number for area.");
+            return;
+        }
+
+        const valInSquareMeters = inputVal / AREA_CONVERSIONS[fromUnit];
+        const outputVal = valInSquareMeters * AREA_CONVERSIONS[toUnit];
+        
+        areaResultDiv.innerHTML = `<h4>Result:</h4><p><strong>${outputVal.toFixed(8)}</strong> ${toUnit}</p>`;
+    }
+
+    function convertDmsToDd() {
+        const ddVal = readDmsGroup(document.getElementById('dmsInputGroup')); // UPDATED
+        if (ddVal === 0) {
+             alert("Please enter a DMS value.");
+             return;
+        }
+        dmsResultDiv.innerHTML = `<h4>Result:</h4><p><strong>${ddVal.toFixed(8)}</strong> (Decimal Degrees)</p>`;
+    }
+
+    function convertDdToDms() {
+        const ddVal = parseFloat(document.getElementById('angleDdInput').value);
+        if (isNaN(ddVal)) {
+             alert("Please enter a valid decimal degree value.");
+             return;
+        }
+        const dmsVal = ddToDms(ddVal);
+        ddResultDiv.innerHTML = `<h4>Result:</h4><p><strong>${dmsVal}</strong> (DMS)</p>`;
+    }
+
+    // --- NEW Radian Conversions ---
+    function convertRadToDeg() {
+        const radVal = parseFloat(document.getElementById('radInput').value);
+        if (isNaN(radVal)) {
+             alert("Please enter a valid radian value.");
+             return;
+        }
+        const degVal = radVal * (180 / Math.PI);
+        radToDegResultDiv.innerHTML = `<h4>Result:</h4>
+            <p><strong>${degVal.toFixed(8)}</strong> (Decimal Degrees)</p>
+            <p><strong>${ddToDms(degVal)}</strong> (DMS)</p>`;
+    }
+
+    function convertDegToRad() {
+        const degVal = parseFloat(document.getElementById('degInput').value);
+        if (isNaN(degVal)) {
+             alert("Please enter a valid decimal degree value.");
+             return;
+        }
+        const radVal = degVal * (Math.PI / 180);
+        degToRadResultDiv.innerHTML = `<h4>Result:</h4><p><strong>${radVal.toFixed(10)}</strong> (Radians)</p>`;
+    }
+    
+    // --- NEW Coord Math Functions ---
+    function calculateDeltaToPol() {
+        const deltaN = parseFloat(document.getElementById('deltaN_in').value);
+        const deltaE = parseFloat(document.getElementById('deltaE_in').value);
+        if (isNaN(deltaN) || isNaN(deltaE)) {
+             alert("Please enter valid Delta values.");
+             return;
+        }
+        
+        const distance = Math.sqrt(deltaN**2 + deltaE**2);
+        const bearingRad = Math.atan2(deltaE, deltaN);
+        const bearingDd = atan2ToBearing(bearingRad);
+        const bearingDms = ddToDms(bearingDd);
+        
+        deltaToPolResultDiv.innerHTML = `<h4>Result:</h4>
+            <p><strong>Azimuth:</strong> ${bearingDms}</p>
+            <p><strong>Distance:</strong> ${distance.toFixed(3)} m</p>`;
+    }
+
+    function calculatePolToDelta() {
+        const bearingDd = readDmsGroup(document.getElementById('polAzimuthGroup')); // UPDATED
+        const distance = parseFloat(document.getElementById('polDist_in').value);
+        if (bearingDd === 0 || isNaN(distance)) {
+             alert("Please enter a valid Azimuth and Distance.");
+             return;
+        }
+        
+        const deltaN = distance * cos_d(bearingDd);
+        const deltaE = distance * sin_d(bearingDd);
+        
+        polToDeltaResultDiv.innerHTML = `<h4>Result:</h4>
+            <p><strong>Δ Northing:</strong> ${deltaN.toFixed(3)}</p>
+            <p><strong>Δ Easting:</strong> ${deltaE.toFixed(3)}</p>`;
+    }
+
+
+    // --- LEVELING CALCULATION ---
+    function calculateLeveling() {
+        levelResultsTable.innerHTML = '';
+        levelChecksDiv.innerHTML = '';
+
+        const rows = levelBook.rows;
+        let startRL = parseFloat(document.getElementById('startRL').value);
+        if (isNaN(startRL)) {
+            alert("Please enter a valid Starting RL.");
+            return;
+        }
+
+        let rise_array = [];
+        let fall_array = [];
+        let totalBS = 0, totalFS = 0, totalRise = 0, totalFall = 0;
+        let lastReading = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i].cells;
+            let bs = parseFloat(row[0].getElementsByTagName('input')[0].value) || 0;
+            let is = parseFloat(row[1].getElementsByTagName('input')[0].value) || 0;
+            let fs = parseFloat(row[2].getElementsByTagName('input')[0].value) || 0;
+            
+            let rise = 0, fall = 0;
+
+            if (i === 0 && bs > 0) { 
+                lastReading = bs;
+            } else {
+                let currentReading = is || fs;
+                if (currentReading > 0 && lastReading > 0) {
+                    let diff = lastReading - currentReading;
+                    if (diff > 0) {
+                        rise = diff;
+                        totalRise += rise;
+                    } else {
+                        fall = Math.abs(diff);
+                        totalFall += fall;
+                    }
+                }
+            }
+
+            if (bs > 0 && fs > 0) { 
+                lastReading = bs; 
+            } else if (is > 0) {
+                lastReading = is;
+            } else if (fs > 0) {
+                lastReading = fs;
+            }
+
+            rise_array.push(rise);
+            fall_array.push(fall);
+            totalBS += bs;
+            totalFS += fs;
+        }
+        
+        let hocRL = startRL;
+        let rfRL = startRL;
+        let current_hoc = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i].cells;
+            let bs = parseFloat(row[0].getElementsByTagName('input')[0].value) || 0;
+            let is = parseFloat(row[1].getElementsByTagName('input')[0].value) || 0;
+            let fs = parseFloat(row[2].getElementsByTagName('input')[0].value) || 0;
+            let remarks = row[3].getElementsByTagName('input')[0].value || '';
+            
+            let rise = rise_array[i];
+            let fall = fall_array[i];
+            let hoc_display = '';
+            
+            if (i === 0) {
+                hocRL = startRL;
+                rfRL = startRL;
+                if (bs > 0) {
+                   current_hoc = startRL + bs;
+                   hoc_display = current_hoc.toFixed(3);
+                }
+            } else {
+                if(is > 0) hocRL = current_hoc - is;
+                if(fs > 0) hocRL = current_hoc - fs;
+                
+                rfRL = rfRL + rise - fall;
+                
+                if (bs > 0 && fs > 0) { 
+                     current_hoc = rfRL + bs; // New HOC based on Rise/Fall RL
+                     hoc_display = current_hoc.toFixed(3);
+                }
+            }
+
+            let newRow = levelResultsTable.insertRow();
+            newRow.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${bs || ''}</td>
+                <td>${is || ''}</td>
+                <td>${fs || ''}</td>
+                <td class="col-rise-fall">${rise > 0 ? rise.toFixed(3) : ''}</td>
+                <td class="col-rise-fall">${fall > 0 ? fall.toFixed(3) : ''}</td>
+                <td><b>${rfRL.toFixed(3)}</b></td>
+                <td class="col-hoc"><i>${hoc_display}</i></td>
+                <td>${remarks}</td>
+            `;
+        }
+
+        let totalsRow = levelResultsTable.insertRow();
+        totalsRow.style.fontWeight = 'bold';
+        totalsRow.style.backgroundColor = '#f9f9f9';
+        totalsRow.innerHTML = `
+            <td><strong>Totals</strong></td>
+            <td><strong>${totalBS.toFixed(3)}</strong></td>
+            <td></td> <td><strong>${totalFS.toFixed(3)}</strong></td>
+            <td class="col-rise-fall"><strong>${totalRise.toFixed(3)}</strong></td>
+            <td class="col-rise-fall"><strong>${totalFall.toFixed(3)}</strong></td>
+            <td></td> <td class="col-hoc"></td> <td></td> `;
+
+        // --- ARITHMETIC CHECKS (Differentiated) ---
+        let lastRL = rfRL; 
+        let check1 = totalBS - totalFS;
+        let check2 = totalRise - totalFall;
+        let check3 = lastRL - startRL;
+        
+        let checksHTML = '<h4>Arithmetic Checks:</h4>';
+        const hocMethod = document.getElementById('levelMethodSelect').value === 'hoc'; // UPDATED
+
+        if (hocMethod) {
+            // HOC Method: Only compare BS/FS and RL checks
+            checksHTML += `<p>ΣBS - ΣFS = ${check1.toFixed(3)}</p>`;
+            checksHTML += `<p>Last RL - First RL = ${check3.toFixed(3)}</p>`;
+            let pass = Math.abs(check1 - check3) < 0.001;
+            checksHTML += `<p><b>Status: ${ pass ? '✅ PASS' : '❌ FAIL' }</b></p>`;
+        } else {
+            // Rise & Fall Method: Show all three checks
+            checksHTML += `<p>ΣBS - ΣFS = ${check1.toFixed(3)}</p>`;
+            checksHTML += `<p>ΣRise - ΣFall = ${check2.toFixed(3)}</p>`;
+            checksHTML += `<p>Last RL - First RL = ${check3.toFixed(3)}</p>`;
+            let pass = (Math.abs(check1 - check2) < 0.001 && Math.abs(check2 - check3) < 0.001);
+            checksHTML += `<p><b>Status: ${ pass ? '✅ PASS' : '❌ FAIL' }</b></p>`;
+        }
+        
+        levelChecksDiv.innerHTML = checksHTML;
+        
+        
+        // --- CLOSING ERROR ANALYSIS (Appended right after) ---
+        const knownCloseRL = parseFloat(document.getElementById('closeRL').value);
+        const distanceK = parseFloat(document.getElementById('levelDist').value);
+        const constantC = parseFloat(document.getElementById('levelConst').value);
+
+        if (!isNaN(knownCloseRL)) {
+            let misclosure = lastRL - knownCloseRL;
+            let analysisHTML = `<h4>Closing Error Analysis:</h4>
+                                <p>Calculated Last RL: ${lastRL.toFixed(3)}</p>
+                                <p>Known Closing RL: ${knownCloseRL.toFixed(3)}</p>
+                                <p><b>Misclosure: ${misclosure.toFixed(3)} m</b></p>`;
+            
+            if (!isNaN(distanceK) && !isNaN(constantC)) {
+                let allowableError_mm = constantC * Math.sqrt(distanceK);
+                let allowableError_m = allowableError_mm / 1000.0;
+                analysisHTML += `<p>Allowable Error (C√K): ±${allowableError_m.toFixed(3)} m</p>`;
+                
+                if (Math.abs(misclosure) <= allowableError_m) {
+                    analysisHTML += `<p style="color: green; font-weight: bold;">✅ PASS: Misclosure is WITHIN allowable error.</p>`;
+                } else {
+                    analysisHTML += `<p style="color: red; font-weight: bold;">❌ FAIL: Misclosure is OUTSIDE allowable error.</p>`;
+                }
+            }
+            levelChecksDiv.innerHTML += analysisHTML; 
+        }
+    }
+
+
+    // --- TRAVERSE CALCULATION ---
+    function calculateTraverse() {
+        traverseResultsDiv.innerHTML = ''; 
+
+        const rows = traverseBook.rows;
+        const n = rows.length;
+        if (n === 0 || (n === 1 && rows[0].cells[3].querySelector('input').value === '')) {
+             alert("Please enter traverse data to calculate.");
+             return;
+        }
+
+        const traverseType = document.getElementById('traverseMethodSelect').value; // UPDATED
+        const adjustmentMethod = document.getElementById('adjustmentMethodSelect').value; // UPDATED
+        
+        // --- 1. Get all data from table ---
+        let bearings = [];
+        let distances = [];
+        let lats = [];
+        let deps = [];
+        let totalPerimeter = 0;
+        let totalLat = 0, totalDep = 0;
+        let totalAbsLat = 0, totalAbsDep = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            let azimuthDd = readDmsGroup(row.cells[2]); // UPDATED
+            
+            if (azimuthDd === 0 && (row.cells[2].querySelector('.dms-deg').value === '' && row.cells[2].querySelector('.dms-min').value === '' && row.cells[2].querySelector('.dms-sec').value === '')) {
+                // This is an empty row, skip it, but only if distance is also empty
+                if(row.cells[3].getElementsByTagName('input')[0].value === '') {
+                    continue;
+                }
+            }
+            
+            bearings.push(azimuthDd);
+            
+            let dist = parseFloat(row.cells[3].getElementsByTagName('input')[0].value);
+            if(isNaN(dist)) {
+                alert(`Error: Invalid distance in row ${i + 1}. Please check your data.`);
+                return;
+            }
+            distances.push(dist);
+            totalPerimeter += dist;
+            
+            // Calculate Lat/Dep
+            let lat = dist * cos_d(azimuthDd);
+            let dep = dist * sin_d(azimuthDd);
+            lats.push(lat);
+            deps.push(dep);
+            totalLat += lat;
+            totalDep += dep;
+            totalAbsLat += Math.abs(lat);
+            totalAbsDep += Math.abs(dep);
+        }
+        
+        // --- 2. Calculate Unadjusted Coords ---
+        let coords = [];
+        let startN = parseFloat(document.getElementById('startNorth').value);
+        let startE = parseFloat(document.getElementById('startEast').value);
+        let currentN = startN, currentE = startE;
+        
+        coords.push({ n: currentN, e: currentE }); // Add starting coords
+
+        for (let i = 0; i < lats.length; i++) { // Use lats.length as 'n' might be different if we skipped rows
+            currentN += lats[i];
+            currentE += deps[i];
+            coords.push({ n: currentN, e: currentE }); // Add new coords
+        }
+        
+        // --- 3. Handle different traverse types ---
+        
+        // Angular check is no longer relevant in this workflow
+        traverseResultsDiv.innerHTML = `<h4>1. Angular Check</h4>
+                                      <p>This calculation uses Preliminary Azimuths. Angular misclosure is not calculated (assumed adjusted).</p>`;
+
+        let latMisclosure = 0, depMisclosure = 0;
+        let linearMisclosure = 0, precision = 0;
+        
+        if (traverseType === 'open') {
+            traverseResultsDiv.innerHTML += `<h4>2. Open Traverse</h4>
+                                          <p>Open traverse selected. No misclosure checks or adjustments are possible.</p>`;
+            // All corrections are 0
+            latMisclosure = 0;
+            depMisclosure = 0;
+            
+        } else if (traverseType === 'loop') {
+            const lastCoord = coords[coords.length - 1]; // Get the unadjusted closing coord
+            latMisclosure = lastCoord.n - startN; 
+            depMisclosure = lastCoord.e - startE; 
+            linearMisclosure = Math.sqrt(latMisclosure**2 + depMisclosure**2);
+            precision = (linearMisclosure === 0) ? Infinity : (totalPerimeter / linearMisclosure);
+
+            traverseResultsDiv.innerHTML += `<h4>2. Linear Check (Closed Loop)</h4>
+                                <table class="results-table" id="traverseLinearCheckTable" style="max-width: 600px;">
+                                    <tbody>
+                                        <tr><td>Calculated Closing N</td><td>${lastCoord.n.toFixed(3)} m</td></tr>
+                                        <tr><td>Known Closing N (Start)</td><td>${startN.toFixed(3)} m</td></tr>
+                                        <tr><td><b>Lat Misclosure (ΔN)</b></td><td><b>${latMisclosure.toFixed(4)} m</b></td></tr>
+                                        <tr><td>Calculated Closing E</td><td>${lastCoord.e.toFixed(3)} m</td></tr>
+                                        <tr><td>Known Closing E (Start)</td><td>${startE.toFixed(3)} m</td></tr>
+                                        <tr><td><b>Dep Misclosure (ΔE)</b></td><td><b>${depMisclosure.toFixed(4)} m</b></td></tr>
+                                        <tr><td>Total Perimeter</td><td>${totalPerimeter.toFixed(3)} m</td></tr>
+                                        <tr><td>Linear Misclosure</td><td>${linearMisclosure.toFixed(4)} m</td></tr>
+                                        <tr><td>Calculated Precision</td><td><b>1 in ${precision === Infinity ? "Perfect" : precision.toFixed(0)}</b></td></tr>
+                                    </tbody>
+                                </table>`;
+            
+            const allowablePrecision = parseFloat(document.getElementById('allowablePrecision').value);
+            if (!isNaN(allowablePrecision)) {
+                if (precision >= allowablePrecision) {
+                    traverseResultsDiv.innerHTML += `<p style="color: green; font-weight: bold;">✅ PASS: Calculated precision is better than allowable (1 in ${allowablePrecision}).</p>`;
+                } else {
+                    traverseResultsDiv.innerHTML += `<p style="color: red; font-weight: bold;">❌ FAIL: Calculated precision is worse than allowable (1 in ${allowablePrecision}).</p>`;
+                }
+            }
+            
+        } else if (traverseType === 'link') {
+            const closeN = parseFloat(document.getElementById('closeNorth').value);
+            const closeE = parseFloat(document.getElementById('closeEast').value);
+            
+            if (isNaN(closeN) || isNaN(closeE)) {
+                alert("For 'Closed Link' traverse, please enter valid Known Closing Coordinates.");
+                return;
+            }
+            
+            const lastCoord = coords[coords.length - 1];
+            latMisclosure = lastCoord.n - closeN;
+            depMisclosure = lastCoord.e - closeE;
+            linearMisclosure = Math.sqrt(latMisclosure**2 + depMisclosure**2);
+            precision = (linearMisclosure === 0) ? Infinity : (totalPerimeter / linearMisclosure);
+
+            traverseResultsDiv.innerHTML += `<h4>2. Linear Check (Closed Link)</h4>
+                                <table class="results-table" id="traverseLinearCheckTable" style="max-width: 600px;">
+                                    <tbody>
+                                        <tr><td>Calculated Closing N</td><td>${lastCoord.n.toFixed(3)} m</td></tr>
+                                        <tr><td>Known Closing N</td><td>${closeN.toFixed(3)} m</td></tr>
+                                        <tr><td><b>Lat Misclosure (ΔN)</b></td><td><b>${latMisclosure.toFixed(4)} m</b></td></tr>
+                                        <tr><td>Calculated Closing E</td><td>${lastCoord.e.toFixed(3)} m</td></tr>
+                                        <tr><td>Known Closing E</td><td>${closeE.toFixed(3)} m</td></tr>
+                                        <tr><td><b>Dep Misclosure (ΔE)</b></td><td><b>${depMisclosure.toFixed(4)} m</b></td></tr>
+                                        <tr><td>Total Perimeter</td><td>${totalPerimeter.toFixed(3)} m</td></tr>
+                                        <tr><td>Linear Misclosure</td><td>${linearMisclosure.toFixed(4)} m</td></tr>
+                                        <tr><td>Calculated Precision</td><td><b>1 in ${precision === Infinity ? "Perfect" : precision.toFixed(0)}</b></td></tr>
+                                    </tbody>
+                                </table>`;
+        }
+        
+        // --- 4. Calculate Adjustments & Final Coords ---
+        
+        if (traverseType === 'loop' || traverseType === 'link') {
+            let methodName = adjustmentMethod === 'bowditch' ? 'Bowditch (Compass) Rule' : 'Transit Rule';
+            traverseResultsDiv.innerHTML += `<p><b>Applying ${methodName} for adjustment.</b></p>`;
+        }
+        
+        // **** THIS IS THE FIX: 11 Columns ****
+        let resultsTable = `<h4>3. Traverse Computation & Coordinates</h4>
+                            <div class="table-wrapper">
+                            <table class="results-table" id="traverseResultsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Line</th> 
+                                        <th>Azimuth</th>
+                                        <th>Distance</th>
+                                        <th>Lat (ΔN)</th>
+                                        <th>Dep (ΔE)</th>
+                                        <th>Corr N</th>
+                                        <th>Corr E</th>
+                                        <th>Adj. Lat</th>
+                                        <th>Adj. Dep</th>
+                                        <th>Northing</th>
+                                        <th>Easting</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr> 
+                                        <td>${rows.length > 0 ? rows[0].cells[0].getElementsByTagName('input')[0].value : 'START'}</td>
+                                        <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td>${startN.toFixed(3)}</td> <td>${startE.toFixed(3)}</td> </tr>`;
+
+        let totalAdjLat = 0, totalAdjDep = 0;
+        let totalLatCorr = 0, totalDepCorr = 0;
+        currentN = startN;
+        currentE = startE;
+        
+        let rowCounter = 0; // Counter for physical rows that had data
+        for (let i = 0; i < rows.length; i++) { // Loop through original HTML rows
+            
+            let bearingDd = readDmsGroup(rows[i].cells[2]);
+            
+            // Skip rows that were empty and skipped in the first loop
+            if ( (bearingDd === 0 && (rows[i].cells[2].querySelector('.dms-deg').value === '' && rows[i].cells[2].querySelector('.dms-min').value === '' && rows[i].cells[2].querySelector('.dms-sec').value === '')) && rows[i].cells[3].getElementsByTagName('input')[0].value === '') {
+                continue;
+            }
+
+            let bearing = bearings[rowCounter]; // Use the pre-calculated bearing
+            let distance = distances[rowCounter];
+            let lat = lats[rowCounter];
+            let dep = deps[rowCounter];
+            
+            // Apply selected adjustment rule
+            let latCorr = 0;
+            let depCorr = 0;
+
+            if (traverseType !== 'open') {
+                if (adjustmentMethod === 'bowditch') {
+                    // Bowditch Rule
+                    latCorr = (totalPerimeter === 0) ? 0 : -latMisclosure * (distance / totalPerimeter);
+                    depCorr = (totalPerimeter === 0) ? 0 : -depMisclosure * (distance / totalPerimeter);
+                } else {
+                    // Transit Rule
+                    latCorr = (totalAbsLat === 0) ? 0 : -latMisclosure * (Math.abs(lat) / totalAbsLat);
+                    depCorr = (totalAbsDep === 0) ? 0 : -depMisclosure * (Math.abs(dep) / totalAbsDep);
+                }
+            }
+            
+            let adjustedLat = lat + latCorr;
+            let adjustedDep = dep + depCorr;
+
+            totalLatCorr += latCorr;
+            totalDepCorr += depCorr;
+            totalAdjLat += adjustedLat;
+            totalAdjDep += adjustedDep;
+
+            currentN += adjustedLat;
+            currentE += adjustedDep;
+            
+            let fromStation = rows[i].cells[0].getElementsByTagName('input')[0].value;
+            let toStation = rows[i].cells[1].getElementsByTagName('input')[0].value;
+            
+            let originalAzimuthDms = ddToDms(bearing);
+            let originalDistance = distance;
+            
+            // **** THIS IS THE FIX: 11 Columns ****
+            resultsTable += `<tr>
+                                <td>${fromStation}-${toStation}</td>
+                                <td>${originalAzimuthDms}</td>
+                                <td>${originalDistance.toFixed(3)}</td>
+                                <td>${lat.toFixed(3)}</td>
+                                <td>${dep.toFixed(3)}</td>
+                                <td>${latCorr.toFixed(3)}</td>
+                                <td>${depCorr.toFixed(3)}</td>
+                                <td><strong>${adjustedLat.toFixed(3)}</strong></td>
+                                <td><strong>${adjustedDep.toFixed(3)}</strong></td>
+                                <td>${currentN.toFixed(3)}</td>
+                                <td>${currentE.toFixed(3)}</td>
+                             </tr>`;
+            
+            rowCounter++; // Increment the counter for data arrays
+        }
+        
+        // --- **** THIS IS THE REAL FIX: No colspan **** ---
+        resultsTable += `<tr style="font-weight: bold; background-color: #f9f9f9;">
+                            <td><strong>ΣSUM</strong></td>
+                            <td></td> <td><strong>${totalPerimeter.toFixed(3)}</strong></td>
+                            <td><strong>${totalLat.toFixed(3)}</strong></td>
+                            <td><strong>${totalDep.toFixed(3)}</strong></td>
+                            <td><strong>${totalLatCorr.toFixed(3)}</strong></td>
+                            <td><strong>${totalDepCorr.toFixed(3)}</strong></td>
+                            <td><strong>${totalAdjLat.toFixed(3)}</strong></td>
+                            <td><strong>${totalAdjDep.toFixed(3)}</strong></td>
+                            <td></td> <td></td> </tr>`;
+
+        resultsTable += `</tbody></table></div>`;
+        traverseResultsDiv.innerHTML += resultsTable;
+        
+        // Add export buttons
+        traverseResultsDiv.innerHTML += `<button id="exportTraverseCsv" class="export-button">Export Results to CSV</button>`;
+        traverseResultsDiv.innerHTML += `<button id="exportTraversePdf" class="export-button pdf-button">Export Results to PDF</button>`;
+        
+        // Final check
+        if (traverseType === 'loop') {
+            let finalCheck = Math.abs(currentN - startN) + Math.abs(currentE - startE);
+            traverseResultsDiv.innerHTML += `<p><b>Adjustment Check (Start vs End Coords):</b> ${finalCheck < 0.001 ? '✅ PASS' : '❌ FAIL'}</p>`;
+        } else if (traverseType === 'link') {
+            const closeN = parseFloat(document.getElementById('closeNorth').value);
+            const closeE = parseFloat(document.getElementById('closeEast').value);
+            let finalCheck = Math.abs(currentN - closeN) + Math.abs(currentE - closeE);
+            traverseResultsDiv.innerHTML += `<p><b>Adjustment Check (Calc vs Known Coords):</b> ${finalCheck < 0.001 ? '✅ PASS' : '❌ FAIL'}</p>`;
+        }
+    }
+
+    
+    // --- FINALLY, LOAD ANY SAVED DATA ---
+    loadData();
+
+}); // <-- This is the closing bracket for 'DOMContentLoaded'
+    </script>
+</body>
+</html>
